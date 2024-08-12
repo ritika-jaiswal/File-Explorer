@@ -1,92 +1,54 @@
 
-import './App.css';
-import { useState } from 'react';
-import { FileExplorer } from './components/FileExplorer';
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { addFile, updateFile, deleteFile, openFile } from './features/fileSystem/FileSystemSlice';
-import { useDispatch, useSelector } from 'react-redux';
+import FileExplorer from './components/FileExplorer';
 
-function App() {
-
-  const [fileSystem, SetFileSystem] = useState({
-    name: 'root',
-    children: {},
-    files: [],
-  });
+const App = () => {
+  const fileSystem = useSelector((state) => state.fileSystem);
   const dispatch = useDispatch();
 
-  // const updateFileSystem = (newFileSystem) => SetFileSystem({...newFileSystem});
-
-
-
-  const handleAdd = (file) => {
-    SetFileSystem((prevFileSystem) => {
-      const updateFiles = [...prevFileSystem.files, file]
-      return { ...prevFileSystem, files: updateFiles };
-    });
-    // dispatch(addFile(file));
-
+  const handleFileAdd = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        dispatch(addFile({
+          name: file.name,
+          content: e.target.result,
+          type: file.type,
+        }));
+      };
+      reader.readAsArrayBuffer(file);
+    }
   };
 
-  const handleOpen = (file) => {
-    const fileURL = URL.createObjectURL(file);
-    window.open(fileURL, '_blank')
-    // dispatch(openFile(file))
+  const handleFileOpen = (file) => {
+    dispatch(openFile(file));
   };
 
-
-  const handleDelete = (file) => {
-    SetFileSystem((prevFileSystem) => {
-      const updateFiles = prevFileSystem.files.filter((f) => f !== file);
-      return { ...prevFileSystem, files: updateFiles };
-    });
-    // dispatch(deleteFile(file));
-
+  const handleFileUpdate = (file, newName) => {
+    dispatch(updateFile({ file, newName }));
   };
 
-  const handleRename = (file, newName) => {
-    SetFileSystem((prevFileSystem) => {
-      const updatedFiles = prevFileSystem.files.map((f) => {
-        if (f === file) {
-          const updatedFiles = new File([f], newName, { type: f.type });
-          return updatedFiles;
-        }
-        return f;
-      });
-      return { ...prevFileSystem, files: updatedFiles };
-    });
-    // dispatch(updateFile({file, newName}));
+  const handleFileDelete = (file) => {
+    dispatch(deleteFile(file));
   };
 
   return (
-    // <div className="p-8">
-    //   <h1 className='text-2xl font-bold'>React File Explorer</h1>
-    //   <FileExplorer
-    //   data = {fileSystem.root}
-    //   onAdd = {handleAdd}
-    //   onDelete = {handleDelete}
-    //   onRename = {handleRename}
-    //   onOpen = {handleOpen}
-    //   />
-
-    // </div>
-    <div className='p-8 bg-gray-100 min-h-screen'>
-      <h1 className='text-4xl font-bold mb-8 text-gray-800 text-center'>
-        React File Explorer
-      </h1>
-      <div className='bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto'>
+    <div className="p-8 bg-gray-100 min-h-screen" >
+      <h1 className="text-4xl font-bold mb-8 text-gray-800 text-center">React File Explorer</h1>
+      <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
         <FileExplorer
           data={fileSystem}
-          onAdd={handleAdd}
-          onDelete={handleDelete}
-          onRename={handleRename}
-          onOpen={handleOpen}
+          onFileAdd={handleFileAdd}
+          onFileOpen={handleFileOpen}
+          onUpdate={handleFileUpdate}
+          onDelete={handleFileDelete}
         />
-
       </div>
-
     </div>
   );
 };
-
 
 export default App;
